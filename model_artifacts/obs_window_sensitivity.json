@@ -1,0 +1,88 @@
+{
+  "lgbm": [
+    {
+      "OBS_WINDOW": 6,
+      "n_windows": 37871,
+      "positive_rate": 0.0559,
+      "n_features": 104,
+      "AUROC": 0.7518,
+      "AUPRC": 0.1622,
+      "Brier": 0.0538,
+      "Sensitivity": 0.287,
+      "Specificity": 0.9323,
+      "Lead_time_mean": 6.0,
+      "Lead_time_std": 0.0,
+      "threshold": 0.105
+    },
+    {
+      "OBS_WINDOW": 12,
+      "n_windows": 36981,
+      "positive_rate": 0.0332,
+      "n_features": 104,
+      "AUROC": 0.7138,
+      "AUPRC": 0.0684,
+      "Brier": 0.0315,
+      "Sensitivity": 0.3626,
+      "Specificity": 0.8205,
+      "Lead_time_mean": 6.0,
+      "Lead_time_std": 0.0,
+      "threshold": 0.059
+    },
+    {
+      "OBS_WINDOW": 18,
+      "n_windows": 31771,
+      "positive_rate": 0.024,
+      "n_features": 104,
+      "AUROC": 0.698,
+      "AUPRC": 0.0572,
+      "Brier": 0.0257,
+      "Sensitivity": 0.3516,
+      "Specificity": 0.8616,
+      "Lead_time_mean": 6.0,
+      "Lead_time_std": 0.0,
+      "threshold": 0.059
+    },
+    {
+      "OBS_WINDOW": 24,
+      "n_windows": 23201,
+      "positive_rate": 0.0242,
+      "n_features": 104,
+      "AUROC": 0.6585,
+      "AUPRC": 0.0437,
+      "Brier": 0.0222,
+      "Sensitivity": 0.3165,
+      "Specificity": 0.8862,
+      "Lead_time_mean": 6.0,
+      "Lead_time_std": 0.0,
+      "threshold": 0.059
+    }
+  ],
+  "lstm": [
+    {
+      "OBS_WINDOW": 6,
+      "AUROC": 0.987,
+      "AUPRC": 0.8593,
+      "Brier": 0.03
+    },
+    {
+      "OBS_WINDOW": 12,
+      "AUROC": 0.9886,
+      "AUPRC": 0.7379,
+      "Brier": 0.0375
+    },
+    {
+      "OBS_WINDOW": 18,
+      "AUROC": 0.9626,
+      "AUPRC": 0.5396,
+      "Brier": 0.0374
+    },
+    {
+      "OBS_WINDOW": 24,
+      "AUROC": 0.9335,
+      "AUPRC": 0.4589,
+      "Brier": 0.0474
+    }
+  ],
+  "chosen_window": 18,
+  "justification": "18h provides the best or near-best AUROC across both LGBM and LSTM. Shorter windows (6h, 12h) lack sufficient clinical history. Longer windows (24h) do not improve performance meaningfully and shrink the cohort by requiring stays >= 30h."
+}

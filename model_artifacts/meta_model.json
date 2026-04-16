@@ -1,0 +1,1 @@
+{"coef": [[6.0389554458363905, 0.9114241086280269]], "intercept": [-2.7219059581460794], "classes": [0, 1], "n_features": 2, "feature_order": ["lstm_prob", "bert_prob"]}

@@ -1,0 +1,246 @@
+{
+  "dataset": {
+    "n_patients": 26607,
+    "n_windows": 31771,
+    "pct_septic": 2.4,
+    "train_size": 22207,
+    "val_size": 4776,
+    "test_size": 4788,
+    "n_features": 106,
+    "obs_window_h": 18,
+    "pred_horizon_h": 6,
+    "mimic_version": "MIMIC-IV v3.1"
+  },
+  "model_results": [
+    {
+      "model": "LR (structured)",
+      "type": "Baseline",
+      "auroc": 0.6419,
+      "auprc": 0.0431
+    },
+    {
+      "model": "LGBM (structured)",
+      "type": "Baseline",
+      "auroc": 0.6998,
+      "auprc": 0.0574
+    },
+    {
+      "model": "RF (structured)",
+      "type": "Baseline",
+      "auroc": 0.763,
+      "auprc": 0.0739
+    },
+    {
+      "model": "TF-IDF (text)",
+      "type": "Baseline",
+      "auroc": 0.7634,
+      "auprc": 0.0744
+    },
+    {
+      "model": "Baseline Meta-Fusion",
+      "type": "Baseline",
+      "auroc": 0.7657,
+      "auprc": 0.0754
+    },
+    {
+      "model": "ClinicalBERT (text)",
+      "type": "Advanced",
+      "auroc": 0.5059,
+      "auprc": 0.0353
+    },
+    {
+      "model": "LSTM (time-series)",
+      "type": "Advanced",
+      "auroc": 0.9729,
+      "auprc": 0.5526
+    },
+    {
+      "model": "LSTM+BERT Weighted",
+      "type": "Advanced",
+      "auroc": 0.9488,
+      "auprc": 0.466
+    },
+    {
+      "model": "LSTM+BERT Meta-Fusion",
+      "type": "Advanced",
+      "auroc": 0.9537,
+      "auprc": 0.5068
+    }
+  ],
+  "obs_window_sensitivity": {
+    "lgbm": [
+      {
+        "OBS_WINDOW": 6,
+        "n_windows": 37871,
+        "positive_rate": 0.0559,
+        "n_features": 104,
+        "AUROC": 0.7518,
+        "AUPRC": 0.1622,
+        "Brier": 0.0538,
+        "Sensitivity": 0.287,
+        "Specificity": 0.9323,
+        "Lead_time_mean": 6.0,
+        "Lead_time_std": 0.0,
+        "threshold": 0.105
+      },
+      {
+        "OBS_WINDOW": 12,
+        "n_windows": 36981,
+        "positive_rate": 0.0332,
+        "n_features": 104,
+        "AUROC": 0.7138,
+        "AUPRC": 0.0684,
+        "Brier": 0.0315,
+        "Sensitivity": 0.3626,
+        "Specificity": 0.8205,
+        "Lead_time_mean": 6.0,
+        "Lead_time_std": 0.0,
+        "threshold": 0.059
+      },
+      {
+        "OBS_WINDOW": 18,
+        "n_windows": 31771,
+        "positive_rate": 0.024,
+        "n_features": 104,
+        "AUROC": 0.698,
+        "AUPRC": 0.0572,
+        "Brier": 0.0257,
+        "Sensitivity": 0.3516,
+        "Specificity": 0.8616,
+        "Lead_time_mean": 6.0,
+        "Lead_time_std": 0.0,
+        "threshold": 0.059
+      },
+      {
+        "OBS_WINDOW": 24,
+        "n_windows": 23201,
+        "positive_rate": 0.0242,
+        "n_features": 104,
+        "AUROC": 0.6585,
+        "AUPRC": 0.0437,
+        "Brier": 0.0222,
+        "Sensitivity": 0.3165,
+        "Specificity": 0.8862,
+        "Lead_time_mean": 6.0,
+        "Lead_time_std": 0.0,
+        "threshold": 0.059
+      }
+    ],
+    "lstm": [
+      {
+        "OBS_WINDOW": 6,
+        "AUROC": 0.987,
+        "AUPRC": 0.8593,
+        "Brier": 0.03
+      },
+      {
+        "OBS_WINDOW": 12,
+        "AUROC": 0.9886,
+        "AUPRC": 0.7379,
+        "Brier": 0.0375
+      },
+      {
+        "OBS_WINDOW": 18,
+        "AUROC": 0.9626,
+        "AUPRC": 0.5396,
+        "Brier": 0.0374
+      },
+      {
+        "OBS_WINDOW": 24,
+        "AUROC": 0.9335,
+        "AUPRC": 0.4589,
+        "Brier": 0.0474
+      }
+    ],
+    "chosen_window": 18
+  },
+  "clinical_metrics": {
+    "lead_time_mean_h": 6.0,
+    "lead_time_median_h": 6.0,
+    "alerts_per_patient_day": 0.0445,
+    "best_threshold": 0.0591,
+    "lstm_threshold": 0.9045
+  },
+  "top_shap_features": [
+    {
+      "feature": "note_total",
+      "mean_abs_shap": 0.28503
+    },
+    {
+      "feature": "RR_mean",
+      "mean_abs_shap": 0.036
+    },
+    {
+      "feature": "admission_type_URGENT",
+      "mean_abs_shap": 0.03187
+    },
+    {
+      "feature": "MAP_max",
+      "mean_abs_shap": 0.02264
+    },
+    {
+      "feature": "SBP_trend",
+      "mean_abs_shap": 0.02171
+    },
+    {
+      "feature": "Temp_mean",
+      "mean_abs_shap": 0.0216
+    },
+    {
+      "feature": "wbc_min",
+      "mean_abs_shap": 0.02126
+    },
+    {
+      "feature": "SpO2_trend",
+      "mean_abs_shap": 0.01861
+    },
+    {
+      "feature": "HR_max",
+      "mean_abs_shap": 0.01432
+    },
+    {
+      "feature": "SpO2_max",
+      "mean_abs_shap": 0.01395
+    },
+    {
+      "feature": "DBP_mean",
+      "mean_abs_shap": 0.01199
+    },
+    {
+      "feature": "HR_last",
+      "mean_abs_shap": 0.01185
+    },
+    {
+      "feature": "lactate_min",
+      "mean_abs_shap": 0.0115
+    },
+    {
+      "feature": "MAP_mean",
+      "mean_abs_shap": 0.00993
+    },
+    {
+      "feature": "SpO2_mean",
+      "mean_abs_shap": 0.00975
+    }
+  ],
+  "leakage_experiment": {
+    "leaky_lgbm": {
+      "auroc": 0.7547,
+      "auprc": 0.0738
+    },
+    "safe_lgbm": {
+      "auroc": 0.6998,
+      "auprc": 0.0574
+    },
+    "leaky_lstm": {
+      "auroc": 0.9769,
+      "auprc": 0.5356
+    },
+    "safe_lstm": {
+      "auroc": 0.9729,
+      "auprc": 0.5526
+    },
+    "auroc_inflation_lgbm": 0.0548,
+    "auroc_inflation_lstm": 0.004
+  }
+}

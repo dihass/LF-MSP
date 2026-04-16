@@ -1,0 +1,1 @@
+{"input_size": 15, "hidden_size": 128, "num_layers": 2, "dropout": 0.3, "feat_cols": ["HR", "SBP", "DBP", "MAP", "RR", "SpO2", "Temp", "creatinine", "bilirubin", "lactate", "wbc", "platelets", "gcs", "vaso_dose", "on_vent"], "seq_len": 18, "obs_window": 18, "pred_horizon": 6}

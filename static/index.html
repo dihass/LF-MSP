@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sepsis Early Warning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #080c14; --surface: #0f1624; --card:   #141c2e;
+    --border: #1e2d47; --border2: #253450;
+    --text:   #dde6f8; --muted:   #5a6e90; --dim:    #3a4e70;
+    --red:    #f0476a; --red-bg:  rgba(240,71,106,0.08); --red-br: rgba(240,71,106,0.3);
+    --green:  #2dd4a0; --green-bg:rgba(45,212,160,0.07); --green-br:rgba(45,212,160,0.3);
+    --amber:  #f59e0b; --amber-bg:rgba(245,158,11,0.07); --amber-br:rgba(245,158,11,0.3);
+    --blue:   #5b9cf6; --purple:  #9b7cff;
+    --mono:   'DM Mono', monospace;
+    --display:'Syne', sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body { background:var(--bg); color:var(--text); font-family:var(--display);
+         font-size:15px; line-height:1.6; min-height:100vh; }
+  body::before {
+    content:''; position:fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(rgba(91,156,246,0.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(91,156,246,0.03) 1px,transparent 1px);
+    background-size:60px 60px; pointer-events:none;
+  }
+  .wrap { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 2rem 4rem; }
+
+  /* Header */
+  header { padding:2.2rem 0 1.8rem; border-bottom:1px solid var(--border);
+           margin-bottom:2rem; display:flex; align-items:flex-end; justify-content:space-between; }
+  .logo { font-size:1.5rem; font-weight:800; letter-spacing:-0.03em;
+          display:flex; align-items:center; gap:0.5rem; }
+  .logo-dot { width:10px; height:10px; border-radius:50%; background:var(--red);
+              box-shadow:0 0 12px var(--red); animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 12px var(--red)} 50%{opacity:.5;box-shadow:0 0 4px var(--red)} }
+  .logo-sub { font-family:var(--mono); font-size:.68rem; color:var(--muted);
+              letter-spacing:.12em; text-transform:uppercase; margin-top:.25rem; }
+  .header-tags { display:flex; gap:.5rem; }
+  .tag { font-family:var(--mono); font-size:.65rem; padding:.2rem .6rem;
+         border-radius:2px; border:1px solid var(--border2); color:var(--muted); letter-spacing:.06em; }
+
+  /* Disclaimer */
+  .disclaimer { background:var(--amber-bg); border:1px solid var(--amber-br);
+    border-left:3px solid var(--amber); border-radius:4px; padding:.6rem 1rem;
+    font-size:.8rem; color:var(--amber); margin-bottom:2rem; font-family:var(--mono); }
+
+  /* Upload */
+  .upload-zone { border:1.5px dashed var(--border2); border-radius:8px; padding:3rem 2rem;
+    text-align:center; cursor:pointer; transition:border-color .2s,background .2s; position:relative; }
+  .upload-zone:hover,.upload-zone.drag { border-color:var(--blue); background:rgba(91,156,246,.04); }
+  .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .upload-icon { font-size:2.5rem; margin-bottom:1rem; opacity:.4; }
+  .upload-title { font-size:1.1rem; font-weight:700; margin-bottom:.4rem; }
+  .upload-sub { font-family:var(--mono); font-size:.72rem; color:var(--muted);
+    max-width:480px; margin:0 auto 1.2rem; line-height:1.8; }
+  .btn-upload { display:inline-block; padding:.55rem 1.4rem; background:var(--blue);
+    color:#fff; border-radius:4px; font-family:var(--mono); font-size:.78rem;
+    font-weight:500; letter-spacing:.06em; cursor:pointer; border:none; transition:opacity .2s; }
+  .btn-upload:hover { opacity:.85; }
+
+  /* Section label */
+  .section-label { font-family:var(--mono); font-size:.62rem; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--muted); margin:2rem 0 .75rem;
+    padding-bottom:.4rem; border-bottom:1px solid var(--border); }
+
+  /* Risk banner */
+  .risk-banner { display:grid; grid-template-columns:auto 1fr auto; align-items:center;
+    gap:2rem; padding:1.8rem 2rem; border-radius:8px; border:1px solid;
+    margin-bottom:.5rem; animation:slideIn .4s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+  .risk-high     { background:var(--red-bg);   border-color:var(--red-br);   border-left:4px solid var(--red); }
+  .risk-moderate { background:var(--amber-bg); border-color:var(--amber-br); border-left:4px solid var(--amber); }
+  .risk-low      { background:var(--green-bg); border-color:var(--green-br); border-left:4px solid var(--green); }
+  .risk-score { font-family:var(--mono); font-size:3.8rem; font-weight:500;
+    line-height:1; letter-spacing:-0.03em; }
+  .risk-high     .risk-score { color:var(--red); }
+  .risk-moderate .risk-score { color:var(--amber); }
+  .risk-low      .risk-score { color:var(--green); }
+  .risk-model-label { font-family:var(--mono); font-size:.65rem; text-transform:uppercase;
+    letter-spacing:.12em; color:var(--muted); }
+  .risk-verdict { font-size:1.4rem; font-weight:800; letter-spacing:-.02em; }
+  .risk-high     .risk-verdict { color:var(--red); }
+  .risk-moderate .risk-verdict { color:var(--amber); }
+  .risk-low      .risk-verdict { color:var(--green); }
+  .risk-equation { font-family:var(--mono); font-size:.72rem; color:var(--muted);
+    line-height:1.9; text-align:right; }
+
+  /* Input score row */
+  .score-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:.5rem; }
+  .score-card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:1rem 1.2rem; }
+  .score-val { font-family:var(--mono); font-size:2rem; font-weight:500; line-height:1; }
+  .score-val.lstm { color:var(--blue); }
+  .score-val.bert { color:var(--purple); }
+  .score-name { font-family:var(--mono); font-size:.62rem; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--muted); margin-top:.35rem; }
+  .score-desc { font-size:.72rem; color:var(--dim); margin-top:.2rem; }
+
+  /* Note badge */
+  .note-badge { display:inline-block; font-family:var(--mono); font-size:.65rem;
+    letter-spacing:.08em; text-transform:uppercase; padding:.2rem .65rem;
+    border-radius:2px; margin-top:.5rem; }
+  .note-present { background:rgba(91,156,246,.1); color:var(--blue); border:1px solid rgba(91,156,246,.3); }
+  .note-absent  { background:rgba(90,110,144,.1); color:var(--muted); border:1px solid var(--border); }
+
+  /* Charts */
+  .chart-card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:1.2rem; margin-bottom:1rem; }
+  .chart-title { font-family:var(--mono); font-size:.65rem; text-transform:uppercase;
+    letter-spacing:.12em; color:var(--muted); margin-bottom:.8rem; }
+  .chart-card img { width:100%; border-radius:3px; }
+
+  /* Peak info */
+  .peak-info { font-family:var(--mono); font-size:.75rem; color:var(--amber);
+    background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2);
+    border-radius:3px; padding:.4rem .8rem; margin-top:.6rem; display:inline-block; }
+
+  /* Feature table */
+  .feat-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.75rem; }
+  .feat-table th { text-align:left; padding:.35rem .5rem; color:var(--muted); font-weight:400;
+    border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.08em; font-size:.62rem; }
+  .feat-table td { padding:.3rem .5rem; color:var(--text); border-bottom:1px solid var(--border); }
+  .feat-bar { height:4px; background:var(--blue); border-radius:2px; min-width:2px; }
+
+  /* Vitals grid */
+  .vitals-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; }
+  .vital-item { background:var(--card); border:1px solid var(--border); border-radius:5px;
+    padding:.5rem .7rem; text-align:center; }
+  .vital-lbl { font-family:var(--mono); font-size:.58rem; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--muted); }
+  .vital-val { font-family:var(--mono); font-size:1.05rem; font-weight:500;
+    color:var(--text); margin-top:.15rem; }
+
+  /* Note section */
+  .note-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  .tfidf-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.75rem; }
+  .tfidf-table th { text-align:left; padding:.35rem .5rem; color:var(--muted); font-weight:400;
+    border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.08em; font-size:.62rem; }
+  .tfidf-table td { padding:.3rem .5rem; color:var(--text); border-bottom:1px solid var(--border); }
+  .tfidf-bar { height:3px; background:var(--purple); border-radius:2px; min-width:2px; }
+  .note-preview { background:var(--surface); border:1px solid var(--border); border-radius:5px;
+    padding:.9rem 1rem; font-family:var(--mono); font-size:.73rem; color:var(--muted);
+    line-height:1.8; white-space:pre-wrap; overflow-y:auto; max-height:220px; }
+
+  /* Loading */
+  .loading-overlay { display:none; position:fixed; inset:0; background:rgba(8,12,20,.88);
+    backdrop-filter:blur(4px); z-index:100; flex-direction:column; align-items:center;
+    justify-content:center; gap:1.5rem; }
+  .loading-overlay.active { display:flex; }
+  .spinner { width:48px; height:48px; border:2px solid var(--border);
+    border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading-steps { display:flex; flex-direction:column; gap:.5rem; }
+  .loading-step { font-family:var(--mono); font-size:.72rem; color:var(--dim);
+    display:flex; align-items:center; gap:.5rem; }
+  .step-dot { width:6px; height:6px; border-radius:50%; background:var(--dim); flex-shrink:0; }
+  .step-dot.active { background:var(--blue); box-shadow:0 0 8px var(--blue); }
+  .step-dot.done   { background:var(--green); }
+
+  /* Error */
+  .error-box { background:var(--red-bg); border:1px solid var(--red-br);
+    border-left:3px solid var(--red); border-radius:4px; padding:.8rem 1rem;
+    font-family:var(--mono); font-size:.8rem; color:var(--red); margin:1rem 0; }
+
+  /* Results */
+  #results { display:none; animation:fadeIn .5s ease; }
+  #results.visible { display:block; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+  .file-chip { display:inline-flex; align-items:center; gap:.5rem; background:var(--card);
+    border:1px solid var(--border); border-radius:4px; padding:.35rem .75rem;
+    font-family:var(--mono); font-size:.72rem; color:var(--muted); margin-bottom:1.5rem; }
+  .file-chip span { color:var(--text); }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-steps">
+    <div class="loading-step"><div class="step-dot" id="s1"></div>Running LSTM on 18h EHR sequence…</div>
+    <div class="loading-step"><div class="step-dot" id="s2"></div>Computing LSTM gradient attribution…</div>
+    <div class="loading-step"><div class="step-dot" id="s3"></div>Encoding clinical note with Bio_ClinicalBERT…</div>
+    <div class="loading-step"><div class="step-dot" id="s4"></div>Computing meta-fusion score…</div>
+    <div class="loading-step"><div class="step-dot" id="s5"></div>Generating charts…</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="logo"><div class="logo-dot"></div>Sepsis Early Warning</div>
+      <div class="logo-sub">LSTM · Bio_ClinicalBERT · Meta-Fusion &nbsp;·&nbsp; MIMIC-IV v3.1</div>
+    </div>
+    <div class="header-tags">
+      <div class="tag">18h window</div>
+      <div class="tag">6h horizon</div>
+      <div class="tag">Research prototype</div>
+    </div>
+  </header>
+
+  <div class="disclaimer">
+    ⚠ Not a medical device. Trained on MIMIC-IV (BIDMC). Not prospectively validated. Do not use for clinical decision-making.
+  </div>
+
+  <div class="section-label">Upload patient CSV</div>
+  <div class="upload-zone" id="dropZone">
+    <input type="file" accept=".csv" id="fileInput">
+    <div class="upload-icon">⬆</div>
+    <div class="upload-title">Drop patient CSV here</div>
+    <div class="upload-sub">
+      Required: HR, SBP, DBP, MAP, RR, SpO2, Temp, creatinine, bilirubin,<br>
+      lactate, wbc, platelets, gcs, vaso_dose, on_vent &nbsp;·&nbsp; Optional: note_text
+    </div>
+    <label class="btn-upload" for="fileInput">Select file</label>
+  </div>
+  <div id="errorBox"></div>
+
+  <div id="results">
+    <div class="file-chip">📄 <span id="filenameLabel"></span></div>
+
+    <!-- Primary result -->
+    <div class="section-label">Fusion prediction result</div>
+    <div class="risk-banner" id="riskBanner">
+      <div class="risk-score" id="riskScore"></div>
+      <div>
+        <div class="risk-model-label">LSTM + Bio_ClinicalBERT Meta-Fusion</div>
+        <div class="risk-verdict" id="riskVerdict"></div>
+        <div id="noteBadge"></div>
+      </div>
+      <div class="risk-equation" id="riskEquation"></div>
+    </div>
+
+    <!-- Input scores -->
+    <div class="section-label">Model inputs to meta-fusion</div>
+    <div class="score-row">
+      <div class="score-card">
+        <div class="score-val lstm" id="lstmScore"></div>
+        <div class="score-name">LSTM — EHR Time-Series</div>
+        <div class="score-desc">18-hour vital + laboratory sequence</div>
+      </div>
+      <div class="score-card">
+        <div class="score-val bert" id="bertScore"></div>
+        <div class="score-name">Bio_ClinicalBERT — Clinical Note</div>
+        <div class="score-desc" id="bertDesc"></div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Explainability -->
+    <div class="section-label">Explainability — Meta-fusion modality attribution</div>
+    <div class="chart-card">
+      <div class="chart-title">Modality log-odds contributions &amp; weight split</div>
+      <img id="metaChart" alt="Meta attribution chart">
+    </div>
+
+    <div class="section-label">Explainability — LSTM EHR gradient attribution</div>
+    <div class="chart-card">
+      <div class="chart-title">
+        Input × gradient attribution · Feature importance · Timestep importance · Attribution heatmap
+      </div>
+      <img id="lstmChart" alt="LSTM attribution chart">
+      <div id="peakInfo"></div>
+    </div>
+
+    <!-- Feature importance table -->
+    <div class="section-label">Top EHR features by gradient attribution</div>
+    <div class="chart-card">
+      <div class="chart-title">Ranked by mean |attribution| across 18 timesteps</div>
+      <table class="feat-table">
+        <thead><tr><th>#</th><th>Feature</th><th>Mean |Attribution|</th><th></th></tr></thead>
+        <tbody id="featTableBody"></tbody>
+      </table>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Note section -->
+    <div id="noteSection">
+      <div class="section-label">Clinical note — text signal</div>
+      <div class="note-grid">
+        <div class="chart-card">
+          <div class="chart-title">Top TF-IDF terms</div>
+          <table class="tfidf-table">
+            <thead><tr><th>Term</th><th>Weight</th><th></th></tr></thead>
+            <tbody id="tfidfBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Note preview</div>
+          <div class="note-preview" id="notePreview"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="noNoteSection" style="display:none">
+      <div class="section-label">Clinical note — text signal</div>
+      <div class="chart-card" style="font-family:var(--mono);font-size:.8rem;color:var(--muted)">
+        No <code>note_text</code> in this CSV. BERT used base-rate prior
+        (<span id="prevalenceDisplay"></span>). Fusion driven entirely by LSTM.
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Vitals -->
+    <div class="section-label">Last-timestep vitals</div>
+    <div class="vitals-grid" id="vitalsGrid"></div>
+  </div>
+</div>
+
+<script>
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.csv')) runPipeline(f);
+  else showError('Please drop a .csv file');
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) runPipeline(e.target.files[0]); });
+
+const steps = ['s1','s2','s3','s4','s5'];
+let stepIdx = 0, stepTimer = null;
+
+function startLoading() {
+  stepIdx = 0;
+  steps.forEach(s => document.getElementById(s).className = 'step-dot');
+  document.getElementById('loadingOverlay').classList.add('active');
+  advanceStep();
+  stepTimer = setInterval(() => { if (stepIdx < steps.length) advanceStep(); }, 1200);
+}
+function advanceStep() {
+  if (stepIdx > 0) document.getElementById(steps[stepIdx-1]).className = 'step-dot done';
+  if (stepIdx < steps.length) {
+    document.getElementById(steps[stepIdx]).className = 'step-dot active';
+    stepIdx++;
+  }
+}
+function stopLoading() {
+  clearInterval(stepTimer);
+  steps.forEach(s => document.getElementById(s).className = 'step-dot done');
+  setTimeout(() => document.getElementById('loadingOverlay').classList.remove('active'), 400);
+}
+
+function showError(msg) {
+  document.getElementById('errorBox').innerHTML = `<div class="error-box">⚠ ${msg}</div>`;
+}
+function clearError() { document.getElementById('errorBox').innerHTML = ''; }
+
+function riskClass(r) {
+  return r === 'HIGH' ? 'risk-high' : r === 'MODERATE' ? 'risk-moderate' : 'risk-low';
+}
+
+async function runPipeline(file) {
+  clearError();
+  document.getElementById('results').classList.remove('visible');
+  startLoading();
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res  = await fetch('/predict', { method:'POST', body:fd });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Server error'); }
+    const data = await res.json();
+    stopLoading();
+    render(data);
+  } catch(e) {
+    stopLoading();
+    showError(e.message);
+  }
+}
+
+function render(d) {
+  const fusion = d.fusion_prob;
+
+  document.getElementById('filenameLabel').textContent = d.filename;
+
+  // Risk banner
+  const banner = document.getElementById('riskBanner');
+  banner.className = `risk-banner ${riskClass(d.risk_level)}`;
+  document.getElementById('riskScore').textContent   = `${(fusion*100).toFixed(1)}%`;
+  document.getElementById('riskVerdict').textContent = d.risk_level + ' RISK';
+
+  document.getElementById('noteBadge').innerHTML = d.has_note
+    ? '<span class="note-badge note-present">✓ Clinical note present</span>'
+    : '<span class="note-badge note-absent">✗ No note — base-rate prior</span>';
+
+  const c = d.meta_coefs;
+  document.getElementById('riskEquation').innerHTML =
+    `fusion = sigmoid(<br>` +
+    `&nbsp;&nbsp;<span style="color:var(--blue)">${d.lstm_prob.toFixed(3)}</span>` +
+    ` × ${c.lstm_weight > 0 ? '+' : ''}${c.lstm_weight.toFixed(3)} [LSTM]<br>` +
+    `&nbsp;&nbsp;+ <span style="color:var(--purple)">${d.bert_prob.toFixed(3)}</span>` +
+    ` × ${c.bert_weight > 0 ? '+' : ''}${c.bert_weight.toFixed(3)} [BERT]<br>` +
+    `&nbsp;&nbsp;+ ${c.intercept.toFixed(3)} [bias]<br>` +
+    `) = <strong>${fusion.toFixed(4)}</strong>`;
+
+  // Input scores
+  document.getElementById('lstmScore').textContent = `${(d.lstm_prob*100).toFixed(1)}%`;
+  document.getElementById('bertScore').textContent = `${(d.bert_prob*100).toFixed(1)}%`;
+  document.getElementById('bertDesc').textContent  = d.has_note
+    ? 'Radiology note CLS embedding'
+    : `Base-rate prior (${(d.train_prevalence*100).toFixed(1)}% training prevalence)`;
+
+  // Charts
+  document.getElementById('metaChart').src = `data:image/png;base64,${d.charts.meta_attribution}`;
+  document.getElementById('lstmChart').src = `data:image/png;base64,${d.charts.lstm_attribution}`;
+
+  // Peak timestep info
+  document.getElementById('peakInfo').innerHTML =
+    `<div class="peak-info">⚡ Peak attribution at hour ${d.peak_timestep} of 18 — ` +
+    `this is the observation hour that most influenced the LSTM prediction.</div>`;
+
+  // Feature importance table
+  const tbody = document.getElementById('featTableBody');
+  tbody.innerHTML = '';
+  const maxImp = Math.max(...d.feat_importance.map(f => f.importance), 0.0001);
+  d.feat_importance.forEach((f, i) => {
+    const barW = Math.round((f.importance / maxImp) * 100);
+    tbody.innerHTML += `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td>${f.feature}</td>
+      <td>${f.importance.toFixed(5)}</td>
+      <td><div class="feat-bar" style="width:${barW}px"></div></td>
+    </tr>`;
+  });
+
+  // Note section
+  if (d.has_note) {
+    document.getElementById('noteSection').style.display   = 'block';
+    document.getElementById('noNoteSection').style.display = 'none';
+    document.getElementById('notePreview').textContent     = d.note_preview || '—';
+    const tb = document.getElementById('tfidfBody');
+    tb.innerHTML = '';
+    const maxW = Math.max(...d.tfidf_terms.map(t => t.weight), 0.001);
+    d.tfidf_terms.slice(0,10).forEach(t => {
+      const bw = Math.round((t.weight / maxW) * 80);
+      tb.innerHTML += `<tr>
+        <td>${t.term}</td>
+        <td>${t.weight.toFixed(4)}</td>
+        <td><div class="tfidf-bar" style="width:${bw}px"></div></td>
+      </tr>`;
+    });
+  } else {
+    document.getElementById('noteSection').style.display   = 'none';
+    document.getElementById('noNoteSection').style.display = 'block';
+    document.getElementById('prevalenceDisplay').textContent = d.train_prevalence.toFixed(4);
+  }
+
+  // Vitals
+  const vitals = [
+    ['HR','bpm'],['SBP','mmHg'],['DBP','mmHg'],['MAP','mmHg'],
+    ['SpO2','%'],['Temp','°C'],['RR','rpm'],['lactate',''],
+    ['wbc',''],['gcs',''],['vaso_dose',''],['on_vent',''],
+  ];
+  document.getElementById('vitalsGrid').innerHTML = vitals.map(([col, unit]) => {
+    const val = d.vitals[col] != null ? `${d.vitals[col]} ${unit}`.trim() : '—';
+    return `<div class="vital-item">
+      <div class="vital-lbl">${col}</div>
+      <div class="vital-val">${val}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+</script>
+</body>
+</html>

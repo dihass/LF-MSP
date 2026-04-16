@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+venv/
+
+# BERT cache (HUGE)
+bert_cache/
+
+# OS
+.DS_Store
+
+# Optional (if too large)
+*.pt
+
+# Data
+*.csv

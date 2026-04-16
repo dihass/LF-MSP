@@ -1,0 +1,3 @@
+#!/bin/bash
+source venv/bin/activate  # Activate your virtual environment
+uvicorn main:app --reload --port 8000
